@@ -454,4 +454,5 @@ def client_check_schedule(message):
         text += f"📍 <b>{r[0]}</b>\n⏰ Час: {r[1]}\n📝 {r[2]}\n\n"
     bot.send_message(message.chat.id, text, parse_mode='HTML')
 
-if __name__ == '__mai
+if __name__ == '__main__':
+    bot.infinity_polling(none_stop=True)
