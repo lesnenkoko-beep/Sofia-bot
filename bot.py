@@ -454,5 +454,8 @@ def client_check_schedule(message):
         text += f"📍 <b>{r[0]}</b>\n⏰ Час: {r[1]}\n📝 {r[2]}\n\n"
     bot.send_message(message.chat.id, text, parse_mode='HTML')
 
-if __name__ == '__main__':
+    if __name__ == '__main__':
+    bot.infinity_polling(none_stop=True)
+    if __name__ == '__main__':
+    bot.remove_webhook()  # Сбрасывает старые зависшие подключения в Telegram
     bot.infinity_polling(none_stop=True)
