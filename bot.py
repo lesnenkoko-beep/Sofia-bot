@@ -406,4 +406,53 @@ def handle_callbacks(call):
         studio, date_time, info = res
 
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("❌ Скасувати (видалити) тренування", callback_
+        markup.add(types.InlineKeyboardButton("❌ Скасувати (видалити) тренування", callback_data=f"schedel_{sched_id}"))
+        bot.edit_message_text(
+            f"📍 Студія: <b>{studio}</b>\n⏰ Час: <b>{date_time}</b>\n📝 Info: {info}\n\nОбери дію:",
+            call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode='HTML'
+        )
+
+    elif data.startswith('schedel_'):
+        sched_id = int(data.split('_')[1])
+        cursor.execute("DELETE FROM schedule WHERE id = ?", (sched_id,))
+        conn.commit()
+        bot.edit_message_text("🗑 Тренування успішно видалено з розкладу.", call.message.chat.id, call.message.message_id, parse_mode='HTML')
+
+@bot.message_handler(func=lambda msg: msg.text == '💳 Мій абонемент')
+def client_check_balance(message):
+    user_id = message.from_user.id
+    cursor.execute("SELECT name, balance, attended, expiry_date FROM clients WHERE tg_id = ?", (user_id,))
+    client = cursor.fetchone()
+    if client:
+        bot.send_message(
+            message.chat.id,
+            f"📋 <b>Твій абонемент:</b>\n\n"
+            f"👤 Клієнтка: {client[0]}\n"
+            f"🔢 Залишок занять: <b>{client[1]}</b>\n"
+            f"✅ Відвідано тренувань: {client[2]}\n"
+            f"⏳ Дійсний до: <b>{client[3]}</b>",
+            parse_mode='HTML'
+        )
+    else:
+        bot.send_message(
+            message.chat.id,
+            "Твій профіль ще не прив'язано до системи. Попроси у тренера своє персональне посилання.",
+            parse_mode='HTML'
+        )
+
+@bot.message_handler(func=lambda msg: msg.text == '📅 Розклад тренувань')
+def client_check_schedule(message):
+    cursor.execute("SELECT studio, date_time, info FROM schedule ORDER BY id DESC LIMIT 10")
+    rows = cursor.fetchall()
+    if not rows:
+        bot.send_message(message.chat.id, "Наразі немає запланованих тренувань у розкладі.")
+        return
+
+    text = "📅 <b>Актуальний розклад студій:</b>\n\n"
+    for r in rows:
+        text += f"📍 <b>{r[0]}</b>\n⏰ Час: {r[1]}\n📝 {r[2]}\n\n"
+    bot.send_message(message.chat.id, text, parse_mode='HTML')
+
+if __name__ == '__main__':
+    bot.remove_webhook()
+    bot.infinity_polling(none_stop=True)
